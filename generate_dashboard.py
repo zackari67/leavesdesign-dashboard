@@ -4,6 +4,7 @@
 Tabs: Team | KPIs | Gantt | Posts | Matrix | Learning
 """
 
+import base64
 import json
 import os
 import re
@@ -2144,12 +2145,38 @@ def main():
 
 # ── Sync Server ────────────────────────────────────────────────────────────
 SYNC_FILE = BASE / "review-sync.json"
+DASH_USER = os.environ.get('DASH_USER', '')
+DASH_PASS = os.environ.get('DASH_PASS', '')
 
 class DashboardHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(BASE), **kwargs)
 
+    def _check_auth(self):
+        """Return True if auth passes (or no auth configured)."""
+        if not DASH_USER:
+            return True
+        auth = self.headers.get('Authorization', '')
+        if not auth.startswith('Basic '):
+            return False
+        try:
+            creds = base64.b64decode(auth[6:]).decode('utf-8')
+        except Exception:
+            return False
+        return creds == f'{DASH_USER}:{DASH_PASS}'
+
+    def _require_auth(self):
+        """Send 401 response asking for credentials."""
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm="Dashboard"')
+        self.send_header('Content-Type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b'Unauthorized')
+
     def do_GET(self):
+        if not self._check_auth():
+            self._require_auth()
+            return
         if self.path == '/api/sync':
             data = SYNC_FILE.read_bytes() if SYNC_FILE.exists() else b'{}'
             self.send_response(200)
@@ -2162,6 +2189,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
+        if not self._check_auth():
+            self._require_auth()
+            return
         if self.path == '/api/sync':
             length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(length)
@@ -2180,6 +2210,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
     def do_OPTIONS(self):
+        if not self._check_auth():
+            self._require_auth()
+            return
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
@@ -2198,6 +2231,10 @@ def serve(port=8787):
     print(f"\n{'='*50}")
     print(f"  Dashboard: http://localhost:{port}/dashboard.html")
     print(f"  Sync API:  http://localhost:{port}/api/sync")
+    if DASH_USER:
+        print(f"  Auth:      user={DASH_USER} (password protected)")
+    else:
+        print(f"  Auth:      OFF (set DASH_USER / DASH_PASS to enable)")
     print(f"{'='*50}")
     print("  Press Ctrl+C to stop.\n")
     server = HTTPServer(('', port), DashboardHandler)
