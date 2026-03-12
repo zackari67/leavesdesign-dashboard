@@ -12,3 +12,4 @@
 !Procfile
 !requirements.txt
 !runtime.txt
+!render.yaml
