@@ -1,0 +1,14 @@
+# ── Whitelist approach: ignore everything, then allow deploy files ──
+*
+
+# Allow these files for deployment
+!.gitignore
+!generate_dashboard.py
+!gantt_results.json
+!gemini_urls_final.json
+!mockup_urls_final.json
+!qa_report.json
+!review-sync.json
+!Procfile
+!requirements.txt
+!runtime.txt
