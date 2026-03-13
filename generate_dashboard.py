@@ -1786,13 +1786,22 @@ def generate_html(data):
       <div class="postly-field">
         <label>\u05e4\u05dc\u05d8\u05e4\u05d5\u05e8\u05de\u05d5\u05ea + Workspace ID</label>
         <div class="postly-plat-table">
-          <!-- Facebook -->
+          <!-- Facebook 1 -->
           <div class="postly-plat-row">
             <input type="checkbox" class="postly-plat-cb" id="platFb" value="facebook" checked
                    onchange="platToggle('facebook',this.checked)">
-            <label class="plat-name" for="platFb">&#x1F4D8; Facebook</label>
+            <label class="plat-name" for="platFb">&#x1F4D8; Facebook 1</label>
             <input type="text" class="plat-ws-input" id="wsIdFacebook"
-                   placeholder="Workspace ID (Zack Ari)">
+                   placeholder="Workspace ID (Custom classic cars)">
+            <span class="plat-hint">fb_text</span>
+          </div>
+          <!-- Facebook 2 -->
+          <div class="postly-plat-row">
+            <input type="checkbox" class="postly-plat-cb" id="platFb2" value="facebook2"
+                   onchange="platToggle('facebook2',this.checked)">
+            <label class="plat-name" for="platFb2">&#x1F4D8; Facebook 2</label>
+            <input type="text" class="plat-ws-input" id="wsIdFacebook2" disabled
+                   placeholder="Workspace ID (Elegant Monogram Sign)">
             <span class="plat-hint">fb_text</span>
           </div>
           <!-- Instagram 1 -->
@@ -2238,6 +2247,7 @@ const POSTLY_API   = '/api/postly';
 // Platform workspace IDs — platform key → localStorage key → input element id
 const PLAT_WS_MAP = {{
   facebook:   {{ lsKey: 'postlyWs_facebook',   inputId: 'wsIdFacebook'   }},
+  facebook2:  {{ lsKey: 'postlyWs_facebook2',  inputId: 'wsIdFacebook2'  }},
   instagram:  {{ lsKey: 'postlyWs_instagram',  inputId: 'wsIdInstagram'  }},
   instagram2: {{ lsKey: 'postlyWs_instagram2', inputId: 'wsIdInstagram2' }},
   tiktok:     {{ lsKey: 'postlyWs_tiktok',     inputId: 'wsIdTiktok'     }},
@@ -2293,19 +2303,23 @@ function postlyToggleAll(state) {{
   document.querySelectorAll('.postly-cb').forEach(cb => cb.checked = state);
 }}
 
-// Map platform → which text field to use from post data
+// Map platform key → which text field to use from post data
 const PLATFORM_TEXT = {{
-  facebook:  p => p.fb_text  || p.sign,
-  instagram: p => p.ig_text  || p.sign,
-  tiktok:    p => p.ig_text  || p.sign,
-  pinterest: p => p.sign,
+  facebook:   p => p.fb_text || p.sign,
+  facebook2:  p => p.fb_text || p.sign,   // Elegant Monogram Sign page — same fb_text
+  instagram:  p => p.ig_text || p.sign,
+  instagram2: p => p.ig_text || p.sign,   // hype.classic.cars — same ig_text
+  tiktok:     p => p.ig_text || p.sign,
+  pinterest:  p => p.sign,
 }};
-// Map platform → preferred image field
+// Map platform key → preferred image field
 const PLATFORM_IMG = {{
-  facebook:  p => p.mockup_url || p.gemini_url,
-  instagram: p => p.mockup_url || p.gemini_url,
-  tiktok:    p => p.gemini_url || p.mockup_url,  // story/vertical if available
-  pinterest: p => p.mockup_url || p.gemini_url,
+  facebook:   p => p.mockup_url || p.gemini_url,
+  facebook2:  p => p.mockup_url || p.gemini_url,
+  instagram:  p => p.mockup_url || p.gemini_url,
+  instagram2: p => p.mockup_url || p.gemini_url,
+  tiktok:     p => p.gemini_url || p.mockup_url,
+  pinterest:  p => p.mockup_url || p.gemini_url,
 }};
 
 async function runPostlyExport() {{
@@ -2322,8 +2336,9 @@ async function runPostlyExport() {{
     const wsId    = document.getElementById(PLAT_WS_MAP[platKey].inputId).value.trim();
     // Save to localStorage
     if (wsId) localStorage.setItem(PLAT_WS_MAP[platKey].lsKey, wsId);
-    // instagram2 sends to 'instagram' platform but with different workspace
-    const apiPlatform = platKey === 'instagram2' ? 'instagram' : platKey;
+    // facebook2/instagram2 → same API platform but different workspace
+    const apiPlatform = platKey === 'facebook2'  ? 'facebook'  :
+                        platKey === 'instagram2' ? 'instagram' : platKey;
     return {{ platKey, apiPlatform, wsId }};
   }});
   if (!enabledPlatforms.length) {{ alert('\u05d1\u05d7\u05e8 \u05dc\u05e4\u05d7\u05d5\u05ea \u05e4\u05dc\u05d8\u05e4\u05d5\u05e8\u05de\u05d4 \u05d0\u05d7\u05ea'); return; }}
