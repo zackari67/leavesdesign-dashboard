@@ -1477,20 +1477,30 @@ def generate_html(data):
   .postly-btn-primary:hover {{ background: #4f46e5; }}
   .postly-btn-cancel {{ background: #2a2a2a; color: #aaa; }}
   .postly-btn-cancel:hover {{ background: #333; }}
-  /* Per-platform workspace table */
-  .postly-plat-table {{ display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }}
-  .postly-plat-row {{ display: grid; grid-template-columns: 18px 140px 1fr auto;
-    align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid #2a2a2a;
-    border-radius: 8px; background: #111; transition: border-color .15s; }}
-  .postly-plat-row:has(.postly-plat-cb:checked) {{ border-color: #3730a3; background: #16153a; }}
-  .postly-plat-row input[type=checkbox] {{ accent-color: #6366f1; width: 15px; height: 15px; cursor: pointer; }}
-  .plat-name {{ font-size: 13px; color: #ccc; font-weight: 500; white-space: nowrap; cursor: pointer; }}
-  .plat-ws-input {{ padding: 5px 8px; background: #0d0d0d; border: 1px solid #333;
-    border-radius: 5px; color: #a5b4fc; font-size: 12px; width: 100%; box-sizing: border-box;
-    font-family: monospace; }}
-  .plat-ws-input:focus {{ outline: none; border-color: #6366f1; }}
-  .plat-ws-input:disabled {{ opacity: 0.35; }}
-  .plat-hint {{ font-size: 10px; color: #555; font-family: monospace; white-space: nowrap; }}
+  /* Postly accounts auto-discovery */
+  .postly-discover-row {{ display: flex; gap: 10px; align-items: center; }}
+  .postly-discover-row input {{ flex: 1; }}
+  .postly-discover-btn {{ padding: 8px 16px; border-radius: 6px; border: 1px solid #6366f1;
+    background: #1e1b4b; color: #a5b4fc; cursor: pointer; font-size: 12px;
+    font-weight: 600; white-space: nowrap; }}
+  .postly-discover-btn:hover {{ background: #312e81; }}
+  .postly-discover-btn:disabled {{ opacity: .5; cursor: wait; }}
+  .postly-accounts {{ display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }}
+  .postly-acct {{ display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    border: 1px solid #2a2a2a; border-radius: 8px; background: #111;
+    transition: border-color .15s; cursor: pointer; }}
+  .postly-acct:has(input:checked) {{ border-color: #3730a3; background: #16153a; }}
+  .postly-acct input[type=checkbox] {{ accent-color: #6366f1; width: 16px; height: 16px; flex-shrink: 0; }}
+  .postly-acct-pic {{ width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: #222; }}
+  .postly-acct-info {{ flex: 1; min-width: 0; }}
+  .postly-acct-name {{ font-size: 13px; color: #e8e8e8; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+  .postly-acct-meta {{ font-size: 11px; color: #666; }}
+  .postly-acct-plat {{ font-size: 11px; color: #818cf8; background: #1e1b4b;
+    padding: 2px 8px; border-radius: 10px; white-space: nowrap; }}
+  .postly-status {{ padding: 10px; border-radius: 8px; font-size: 12px; color: #888; text-align: center; }}
+  .postly-status.loading {{ color: #a5b4fc; }}
+  .postly-status.error {{ color: #f87171; background: #2d0b0b; border: 1px solid #7f1d1d; }}
   .postly-select-all {{ font-size: 11px; color: #6366f1; cursor: pointer; text-decoration: underline; margin-bottom: 6px; display: inline-block; }}
   .postly-result {{ margin-top: 12px; padding: 12px; border-radius: 8px; font-size: 13px; display: none; }}
   .postly-result.ok {{ background: #052e16; color: #4ade80; border: 1px solid #166534; }}
@@ -1781,67 +1791,16 @@ def generate_html(data):
       <h2>\ud83d\udce4 \u05d9\u05d9\u05e6\u05d5\u05d0 \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd \u05dc-Postly</h2>
       <div class="postly-field">
         <label>Postly API Key</label>
-        <input type="password" id="postlyApiKey" placeholder="pk_live_..." autocomplete="off">
-      </div>
-      <div class="postly-field">
-        <label>\u05e4\u05dc\u05d8\u05e4\u05d5\u05e8\u05de\u05d5\u05ea + Workspace ID</label>
-        <div class="postly-plat-table">
-          <!-- Facebook 1 -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platFb" value="facebook" checked
-                   onchange="platToggle('facebook',this.checked)">
-            <label class="plat-name" for="platFb">&#x1F4D8; Facebook 1</label>
-            <input type="text" class="plat-ws-input" id="wsIdFacebook"
-                   placeholder="Workspace ID (Custom classic cars)">
-            <span class="plat-hint">fb_text</span>
-          </div>
-          <!-- Facebook 2 -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platFb2" value="facebook2"
-                   onchange="platToggle('facebook2',this.checked)">
-            <label class="plat-name" for="platFb2">&#x1F4D8; Facebook 2</label>
-            <input type="text" class="plat-ws-input" id="wsIdFacebook2" disabled
-                   placeholder="Workspace ID (Elegant Monogram Sign)">
-            <span class="plat-hint">fb_text</span>
-          </div>
-          <!-- Instagram 1 -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platIg" value="instagram" checked
-                   onchange="platToggle('instagram',this.checked)">
-            <label class="plat-name" for="platIg">&#x1F4F7; Instagram 1</label>
-            <input type="text" class="plat-ws-input" id="wsIdInstagram"
-                   placeholder="Workspace ID (leavesdesign.shop)">
-            <span class="plat-hint">ig_text</span>
-          </div>
-          <!-- Instagram 2 -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platIg2" value="instagram2"
-                   onchange="platToggle('instagram2',this.checked)">
-            <label class="plat-name" for="platIg2">&#x1F4F7; Instagram 2</label>
-            <input type="text" class="plat-ws-input" id="wsIdInstagram2" disabled
-                   placeholder="Workspace ID (hype.classic.cars)">
-            <span class="plat-hint">ig_text</span>
-          </div>
-          <!-- TikTok -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platTt" value="tiktok"
-                   onchange="platToggle('tiktok',this.checked)">
-            <label class="plat-name" for="platTt">&#x1F3B5; TikTok</label>
-            <input type="text" class="plat-ws-input" id="wsIdTiktok" disabled
-                   placeholder="Workspace ID (Best metal art gifts)">
-            <span class="plat-hint">ig_text</span>
-          </div>
-          <!-- Pinterest -->
-          <div class="postly-plat-row">
-            <input type="checkbox" class="postly-plat-cb" id="platPt" value="pinterest"
-                   onchange="platToggle('pinterest',this.checked)">
-            <label class="plat-name" for="platPt">&#x1F4CC; Pinterest</label>
-            <input type="text" class="plat-ws-input" id="wsIdPinterest" disabled
-                   placeholder="Workspace ID (leaves_design)">
-            <span class="plat-hint">sign</span>
-          </div>
+        <div class="postly-discover-row">
+          <input type="password" id="postlyApiKey" placeholder="pk_live_..." autocomplete="off">
+          <button class="postly-discover-btn" id="postlyDiscoverBtn" onclick="postlyDiscover()">&#x1F50D; \u05d2\u05dc\u05d4 \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea</button>
         </div>
       </div>
+      <div class="postly-field" id="postlyAccountsField" style="display:none">
+        <label>\u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea \u05de\u05d7\u05d5\u05d1\u05e8\u05d9\u05dd <span id="postlyAcctCount"></span></label>
+        <div class="postly-accounts" id="postlyAccountsList"></div>
+      </div>
+      <div id="postlyDiscoverStatus"></div>
       <div class="postly-field">
         <label>\u05e9\u05e2\u05ea \u05e4\u05e8\u05e1\u05d5\u05dd (\u05e9\u05e2\u05ea \u05d9\u05e9\u05e8\u05d0\u05dc)</label>
         <select id="postlyTime">
@@ -2244,40 +2203,99 @@ document.getElementById('lightbox').addEventListener('click', () => {{
 const POSTLY_POSTS = window.__POSTS_DATA__ || [];
 const POSTLY_API   = '/api/postly';
 
-// Platform workspace IDs — platform key → localStorage key → input element id
-const PLAT_WS_MAP = {{
-  facebook:   {{ lsKey: 'postlyWs_facebook',   inputId: 'wsIdFacebook'   }},
-  facebook2:  {{ lsKey: 'postlyWs_facebook2',  inputId: 'wsIdFacebook2'  }},
-  instagram:  {{ lsKey: 'postlyWs_instagram',  inputId: 'wsIdInstagram'  }},
-  instagram2: {{ lsKey: 'postlyWs_instagram2', inputId: 'wsIdInstagram2' }},
-  tiktok:     {{ lsKey: 'postlyWs_tiktok',     inputId: 'wsIdTiktok'     }},
-  pinterest:  {{ lsKey: 'postlyWs_pinterest',  inputId: 'wsIdPinterest'  }},
-}};
+// ── Postly auto-discovery + state ──
+let POSTLY_ACCOUNTS = JSON.parse(localStorage.getItem('postlyAccounts') || '[]');
 
 function openPostlyModal() {{
-  // Restore API key
   const savedKey = localStorage.getItem('postlyApiKey');
   if (savedKey) document.getElementById('postlyApiKey').value = savedKey;
-  // Restore per-platform workspace IDs
-  for (const [plat, cfg] of Object.entries(PLAT_WS_MAP)) {{
-    const saved = localStorage.getItem(cfg.lsKey);
-    if (saved) document.getElementById(cfg.inputId).value = saved;
-  }}
   document.getElementById('postlyResult').style.display = 'none';
   renderPostlyList();
+  // If we have cached accounts, show them
+  if (POSTLY_ACCOUNTS.length) renderPostlyAccounts();
   document.getElementById('postlyOverlay').classList.add('open');
 }}
 function closePostlyModal() {{
-  // Save workspace IDs to localStorage on close
-  for (const [plat, cfg] of Object.entries(PLAT_WS_MAP)) {{
-    const val = document.getElementById(cfg.inputId).value.trim();
-    if (val) localStorage.setItem(cfg.lsKey, val);
-  }}
   document.getElementById('postlyOverlay').classList.remove('open');
 }}
-function platToggle(platform, enabled) {{
-  const inp = document.getElementById(PLAT_WS_MAP[platform].inputId);
-  if (inp) inp.disabled = !enabled;
+
+// Auto-discover workspaces + channels from Postly API
+async function postlyDiscover() {{
+  const apiKey = document.getElementById('postlyApiKey').value.trim();
+  if (!apiKey) {{ alert('\u05e0\u05d0 \u05d4\u05db\u05e0\u05e1 API Key'); return; }}
+  localStorage.setItem('postlyApiKey', apiKey);
+
+  const btn    = document.getElementById('postlyDiscoverBtn');
+  const status = document.getElementById('postlyDiscoverStatus');
+  btn.disabled = true;
+  btn.textContent = '\u05de\u05d7\u05e4\u05e9...';
+  status.className = 'postly-status loading';
+  status.textContent = '\u05de\u05ea\u05d7\u05d1\u05e8 \u05dc-Postly \u05d5\u05de\u05d2\u05dc\u05d4 \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea...';
+  status.style.display = 'block';
+
+  try {{
+    const res = await fetch('/api/postly/discover', {{
+      method: 'POST',
+      headers: {{ 'Content-Type': 'application/json' }},
+      body: JSON.stringify({{ apiKey }}),
+    }});
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Discovery failed');
+
+    POSTLY_ACCOUNTS = data.accounts.map(a => ({{
+      ...a,
+      enabled: true,   // all on by default
+      textField: guessTextField(a.platform),
+    }}));
+    localStorage.setItem('postlyAccounts', JSON.stringify(POSTLY_ACCOUNTS));
+    status.style.display = 'none';
+    renderPostlyAccounts();
+  }} catch (e) {{
+    status.className = 'postly-status error';
+    status.textContent = '\u274c ' + e.message;
+  }} finally {{
+    btn.disabled = false;
+    btn.textContent = '\uD83D\uDD0D \u05d2\u05dc\u05d4 \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea';
+  }}
+}}
+
+function guessTextField(platform) {{
+  if (platform === 'facebook')  return 'fb_text';
+  if (platform === 'instagram') return 'ig_text';
+  if (platform === 'tiktok')    return 'ig_text';
+  if (platform === 'pinterest') return 'sign';
+  return 'fb_text';
+}}
+
+const PLAT_ICONS = {{
+  facebook: '\uD83D\uDCD8', instagram: '\uD83D\uDCF7', tiktok: '\uD83C\uDFB5',
+  pinterest: '\uD83D\uDCCC', twitter: '\uD83D\uDC26', linkedin: '\uD83D\uDCBC',
+  bluesky: '\u2601\uFE0F',
+}};
+
+function renderPostlyAccounts() {{
+  const field = document.getElementById('postlyAccountsField');
+  const list  = document.getElementById('postlyAccountsList');
+  const count = document.getElementById('postlyAcctCount');
+
+  if (!POSTLY_ACCOUNTS.length) {{ field.style.display = 'none'; return; }}
+
+  field.style.display = 'block';
+  count.textContent = `(${{POSTLY_ACCOUNTS.length}})`;
+  list.innerHTML = POSTLY_ACCOUNTS.map((a, i) => `
+    <label class="postly-acct">
+      <input type="checkbox" data-idx="${{i}}" ${{a.enabled ? 'checked' : ''}}
+             onchange="POSTLY_ACCOUNTS[${{i}}].enabled=this.checked;localStorage.setItem('postlyAccounts',JSON.stringify(POSTLY_ACCOUNTS))">
+      ${{a.picture
+        ? `<img class="postly-acct-pic" src="${{a.picture}}" onerror="this.style.display='none'">`
+        : `<div class="postly-acct-pic" style="display:flex;align-items:center;justify-content:center;font-size:16px">${{PLAT_ICONS[a.platform]||'\uD83C\uDF10'}}</div>`}}
+      <div class="postly-acct-info">
+        <div class="postly-acct-name">${{a.channelName || a.workspaceName}}</div>
+        <div class="postly-acct-meta">${{a.workspaceName}} \u00b7 ${{a.textField}}</div>
+      </div>
+      <span class="postly-acct-plat">${{PLAT_ICONS[a.platform]||''}} ${{a.platform}}</span>
+    </label>
+  `).join('');
 }}
 
 function renderPostlyList() {{
@@ -2303,24 +2321,18 @@ function postlyToggleAll(state) {{
   document.querySelectorAll('.postly-cb').forEach(cb => cb.checked = state);
 }}
 
-// Map platform key → which text field to use from post data
-const PLATFORM_TEXT = {{
-  facebook:   p => p.fb_text || p.sign,
-  facebook2:  p => p.fb_text || p.sign,   // Elegant Monogram Sign page — same fb_text
-  instagram:  p => p.ig_text || p.sign,
-  instagram2: p => p.ig_text || p.sign,   // hype.classic.cars — same ig_text
-  tiktok:     p => p.ig_text || p.sign,
-  pinterest:  p => p.sign,
-}};
-// Map platform key → preferred image field
-const PLATFORM_IMG = {{
-  facebook:   p => p.mockup_url || p.gemini_url,
-  facebook2:  p => p.mockup_url || p.gemini_url,
-  instagram:  p => p.mockup_url || p.gemini_url,
-  instagram2: p => p.mockup_url || p.gemini_url,
-  tiktok:     p => p.gemini_url || p.mockup_url,
-  pinterest:  p => p.mockup_url || p.gemini_url,
-}};
+// Map textField → which text to use from post data
+function getPostText(textField, post) {{
+  if (textField === 'fb_text')  return post.fb_text  || post.sign;
+  if (textField === 'ig_text')  return post.ig_text  || post.sign;
+  if (textField === 'sign')     return post.sign;
+  return post.fb_text || post.sign;
+}}
+// Map platform → preferred image
+function getPostImg(platform, post) {{
+  if (platform === 'tiktok') return post.gemini_url || post.mockup_url;
+  return post.mockup_url || post.gemini_url;
+}}
 
 async function runPostlyExport() {{
   const apiKey   = document.getElementById('postlyApiKey').value.trim();
@@ -2330,50 +2342,48 @@ async function runPostlyExport() {{
   if (!apiKey) {{ alert('\u05e0\u05d0 \u05d4\u05db\u05e0\u05e1 Postly API Key'); return; }}
   localStorage.setItem('postlyApiKey', apiKey);
 
-  // Collect enabled platforms + their workspace IDs
-  const enabledPlatforms = [...document.querySelectorAll('.postly-plat-cb:checked')].map(cb => {{
-    const platKey = cb.value;  // e.g. 'facebook', 'instagram', 'instagram2', ...
-    const wsId    = document.getElementById(PLAT_WS_MAP[platKey].inputId).value.trim();
-    // Save to localStorage
-    if (wsId) localStorage.setItem(PLAT_WS_MAP[platKey].lsKey, wsId);
-    // facebook2/instagram2 → same API platform but different workspace
-    const apiPlatform = platKey === 'facebook2'  ? 'facebook'  :
-                        platKey === 'instagram2' ? 'instagram' : platKey;
-    return {{ platKey, apiPlatform, wsId }};
-  }});
-  if (!enabledPlatforms.length) {{ alert('\u05d1\u05d7\u05e8 \u05dc\u05e4\u05d7\u05d5\u05ea \u05e4\u05dc\u05d8\u05e4\u05d5\u05e8\u05de\u05d4 \u05d0\u05d7\u05ea'); return; }}
-
-  // Validate workspace IDs
-  const missingWs = enabledPlatforms.filter(p => !p.wsId).map(p => p.platKey);
-  if (missingWs.length) {{
-    alert('\u05d7\u05e1\u05e8 Workspace ID \u05dc: ' + missingWs.join(', ') + '\n\u05d0\u05e0\u05d0 \u05d4\u05db\u05e0\u05e1 \u05d0\u05ea \u05d4-ID \u05de-Postly');
+  // Enabled accounts from auto-discovery
+  const enabledAccounts = POSTLY_ACCOUNTS.filter(a => a.enabled);
+  if (!enabledAccounts.length) {{
+    alert('\u05d0\u05d9\u05df \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea \u05e4\u05e2\u05d9\u05dc\u05d9\u05dd. \u05dc\u05d7\u05e5 "\u05d2\u05dc\u05d4 \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea" \u05e7\u05d5\u05d3\u05dd.');
     return;
   }}
 
-  // Build flat list: one entry per (post × platform)
-  const checkedDates = new Set([...document.querySelectorAll('.postly-cb:checked')].map(cb => cb.dataset.date));
+  // Selected posts
+  const checkedDates = new Set(
+    [...document.querySelectorAll('.postly-cb:checked')].map(cb => cb.dataset.date)
+  );
   if (!checkedDates.size) {{ alert('\u05d1\u05d7\u05e8 \u05dc\u05e4\u05d7\u05d5\u05ea \u05e4\u05d5\u05e1\u05d8 \u05d0\u05d7\u05d3'); return; }}
 
+  // Build flat list: one entry per (post x account)
   const postsToSend = [];
   for (const post of POSTLY_POSTS) {{
     if (!checkedDates.has(post.date)) continue;
-    for (const {{ platKey, apiPlatform, wsId }} of enabledPlatforms) {{
+    for (const acct of enabledAccounts) {{
       postsToSend.push({{
         date:        post.date,
-        platform:    apiPlatform,
-        workspaceId: wsId,
-        text:        PLATFORM_TEXT[platKey](post),
-        imageUrl:    PLATFORM_IMG[platKey](post) || '',
+        platform:    acct.platform,
+        workspaceId: acct.workspaceId,
+        channelId:   acct.channelId,
+        channelName: acct.channelName || acct.workspaceName,
+        text:        getPostText(acct.textField, post),
+        imageUrl:    getPostImg(acct.platform, post) || '',
       }});
     }}
   }}
 
   if (!postsToSend.length) {{ alert('\u05d0\u05d9\u05df \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd \u05dc\u05e9\u05dc\u05d9\u05d7\u05d4'); return; }}
 
+  // Confirmation
+  const n = postsToSend.length;
+  const nPosts = checkedDates.size;
+  const nAccts = enabledAccounts.length;
+  if (!confirm(`\u05dc\u05e9\u05dc\u05d5\u05d7 ${{n}} \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd?\n(${{nPosts}} \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd x ${{nAccts}} \u05d7\u05e9\u05d1\u05d5\u05e0\u05d5\u05ea)`)) return;
+
   resultEl.style.display = 'none';
   const btn = document.querySelector('.postly-btn-primary');
   btn.disabled = true;
-  btn.textContent = `\u05e9\u05d5\u05dc\u05d7 ${{postsToSend.length}} \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd...`;
+  btn.textContent = `\u05e9\u05d5\u05dc\u05d7 ${{n}} \u05e4\u05d5\u05e1\u05d8\u05d9\u05dd...`;
 
   try {{
     const res = await fetch(POSTLY_API, {{
@@ -2385,16 +2395,18 @@ async function runPostlyExport() {{
     if (data.ok) {{
       const ok  = data.results.filter(r => r.ok).length;
       const err = data.results.filter(r => !r.ok).length;
-      // Group by platform+workspace for summary
-      const byGroup = {{}};
+      // Group by channel name
+      const byAcct = {{}};
       data.results.forEach(r => {{
-        const k = r.platform + (r.workspaceId ? '/' + r.workspaceId : '');
-        byGroup[k] = (byGroup[k]||0) + (r.ok ? 1 : 0);
+        const k = r.channelName || r.platform;
+        if (!byAcct[k]) byAcct[k] = {{ ok: 0, err: 0 }};
+        r.ok ? byAcct[k].ok++ : byAcct[k].err++;
       }});
-      const summary = Object.entries(byGroup).map(([k,v]) => `${{k}}: ${{v}}`).join(' | ');
-      resultEl.className = 'postly-result ok';
-      resultEl.innerHTML = `&#x2705; ${{ok}} \u05e0\u05e9\u05dc\u05d7\u05d5 &#8212; ${{summary}}` +
-        (err ? `<br>&#x274C; ${{err}} \u05e0\u05db\u05e9\u05dc\u05d5` : '');
+      const lines = Object.entries(byAcct).map(([name, s]) =>
+        `${{s.ok ? '\u2705' : '\u274C'}} ${{name}}: ${{s.ok}} \u05e0\u05e9\u05dc\u05d7\u05d5${{s.err ? ', ' + s.err + ' \u05e0\u05db\u05e9\u05dc\u05d5' : ''}}`
+      );
+      resultEl.className = 'postly-result ' + (err ? 'err' : 'ok');
+      resultEl.innerHTML = lines.join('<br>');
       resultEl.style.display = 'block';
     }} else {{
       throw new Error(data.error || 'Server error');
@@ -2498,6 +2510,61 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'Unauthorized')
 
+    def _handle_postly_discover(self):
+        """Auto-discover Postly workspaces + connected social accounts."""
+        import urllib.request as _req
+        length = int(self.headers.get('Content-Length', 0))
+        body = self.rfile.read(length)
+        try:
+            payload = json.loads(body)
+        except json.JSONDecodeError:
+            self.send_error(400, 'Invalid JSON')
+            return
+        api_key = payload.get('apiKey', '')
+        if not api_key:
+            self._json_response({'ok': False, 'error': 'Missing apiKey'}, 400)
+            return
+
+        POSTLY_BASE = 'https://openapi.postly.ai/v1'
+        try:
+            # Step 1: Fetch all workspaces
+            req_ws = _req.Request(f'{POSTLY_BASE}/workspaces', method='GET')
+            req_ws.add_header('X-API-KEY', api_key)
+            with _req.urlopen(req_ws, timeout=15) as resp:
+                ws_data = json.loads(resp.read())
+            workspaces = ws_data.get('data', [])
+
+            # Step 2: For each workspace, fetch connected socials
+            accounts = []
+            for ws in workspaces:
+                ws_id = ws.get('_id', '')
+                ws_name = ws.get('name', '')
+                req_soc = _req.Request(
+                    f'{POSTLY_BASE}/workspaces/{ws_id}/socials', method='GET')
+                req_soc.add_header('X-API-KEY', api_key)
+                try:
+                    with _req.urlopen(req_soc, timeout=15) as resp:
+                        soc_data = json.loads(resp.read())
+                    for ch in soc_data.get('data', []):
+                        accounts.append({
+                            'workspaceId': ws_id,
+                            'workspaceName': ws_name,
+                            'channelId': ch.get('id', ''),
+                            'channelName': ch.get('name', ''),
+                            'platform': ch.get('target', ''),
+                            'picture': ch.get('picture', ''),
+                        })
+                except Exception:
+                    pass  # skip failed workspace socials
+
+            self._json_response({
+                'ok': True,
+                'workspaces': workspaces,
+                'accounts': accounts,
+            })
+        except Exception as e:
+            self._json_response({'ok': False, 'error': str(e)}, 500)
+
     def _handle_postly(self):
         """Proxy POST requests to the Postly API for each selected post."""
         import urllib.request as _req
@@ -2520,14 +2587,18 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         POSTLY_URL = 'https://openapi.postly.ai/v1/posts'
         results = []
         for p in posts:
-            # Each post carries its own platform + workspace ID (set by JS)
+            # Each post carries platform, workspaceId, channelId from auto-discovery
             platform     = p.get('platform', 'facebook')
             workspace_id = p.get('workspaceId', '')
+            channel_id   = p.get('channelId', '')
+            channel_name = p.get('channelName', '')
             text         = p.get('text') or ''
+            # Use channelId as target_platforms if available (targets specific page/account)
+            target = channel_id if channel_id else platform
             post_body = {
                 'text':             text,
                 'workspace':        workspace_id,
-                'target_platforms': platform,
+                'target_platforms': target,
                 'one_off_schedule': {
                     'one_off_date': p.get('date', ''),
                     'time':         time_str + ':00',
@@ -2547,12 +2618,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     resp_body = json.loads(resp.read())
                     results.append({
                         'date': p.get('date'), 'platform': platform,
-                        'workspaceId': workspace_id, 'ok': True, 'data': resp_body
+                        'channelName': channel_name, 'ok': True, 'data': resp_body
                     })
             except Exception as e:
                 results.append({
                     'date': p.get('date'), 'platform': platform,
-                    'workspaceId': workspace_id, 'ok': False, 'error': str(e)
+                    'channelName': channel_name, 'ok': False, 'error': str(e)
                 })
 
         self._json_response({'ok': True, 'results': results})
@@ -2584,6 +2655,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
     def do_POST(self):
         if not self._check_auth():
             self._require_auth()
+            return
+        if self.path == '/api/postly/discover':
+            self._handle_postly_discover()
             return
         if self.path == '/api/postly':
             self._handle_postly()
