@@ -2207,12 +2207,17 @@ const POSTLY_API   = '/api/postly';
 let POSTLY_ACCOUNTS = JSON.parse(localStorage.getItem('postlyAccounts') || '[]');
 
 function openPostlyModal() {{
-  const savedKey = localStorage.getItem('postlyApiKey');
-  if (savedKey) document.getElementById('postlyApiKey').value = savedKey;
+  // Priority: embedded key > localStorage
+  const key = window.__POSTLY_KEY__ || localStorage.getItem('postlyApiKey') || '';
+  if (key) document.getElementById('postlyApiKey').value = key;
   document.getElementById('postlyResult').style.display = 'none';
   renderPostlyList();
-  // If we have cached accounts, show them
-  if (POSTLY_ACCOUNTS.length) renderPostlyAccounts();
+  // If we have cached accounts, show them; otherwise auto-discover if key exists
+  if (POSTLY_ACCOUNTS.length) {{
+    renderPostlyAccounts();
+  }} else if (key) {{
+    setTimeout(() => postlyDiscover(), 300);  // auto-discover on first open
+  }}
   document.getElementById('postlyOverlay').classList.add('open');
 }}
 function closePostlyModal() {{
@@ -2424,9 +2429,17 @@ async function runPostlyExport() {{
 </body>
 </html>"""
 
-    # Inject review sync state + posts data before the main <script> block
+    # Load Postly API key from local file (not committed to git)
+    postly_key_file = BASE / '.postly_key'
+    postly_key = ''
+    if postly_key_file.exists():
+        postly_key = postly_key_file.read_text(encoding='utf-8').strip()
+
+    # Inject review sync state + posts data + API key before the main <script> block
     sync_tag = ('<script>window.__REVIEW_SYNC__=' + sync_json_str +
-                ';window.__POSTS_DATA__=' + posts_json + ';</script>\n')
+                ';window.__POSTS_DATA__=' + posts_json +
+                (f';window.__POSTLY_KEY__="{postly_key}"' if postly_key else '') +
+                ';</script>\n')
     html = html.replace('<!-- Lightbox -->', sync_tag + '<!-- Lightbox -->')
     return html
 
@@ -2510,9 +2523,21 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(b'Unauthorized')
 
+    @staticmethod
+    def _postly_request(url, api_key, method='GET', data=None):
+        """Make a request to Postly API with required headers (User-Agent for Cloudflare)."""
+        import urllib.request as _req
+        req = _req.Request(url, data=data, method=method)
+        req.add_header('X-API-KEY', api_key)
+        req.add_header('User-Agent', 'LeavesDesign-Dashboard/1.0')
+        req.add_header('Accept', 'application/json')
+        if data:
+            req.add_header('Content-Type', 'application/json')
+        with _req.urlopen(req, timeout=20) as resp:
+            return json.loads(resp.read())
+
     def _handle_postly_discover(self):
         """Auto-discover Postly workspaces + connected social accounts."""
-        import urllib.request as _req
         length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(length)
         try:
@@ -2528,10 +2553,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         POSTLY_BASE = 'https://openapi.postly.ai/v1'
         try:
             # Step 1: Fetch all workspaces
-            req_ws = _req.Request(f'{POSTLY_BASE}/workspaces', method='GET')
-            req_ws.add_header('X-API-KEY', api_key)
-            with _req.urlopen(req_ws, timeout=15) as resp:
-                ws_data = json.loads(resp.read())
+            ws_data = self._postly_request(f'{POSTLY_BASE}/workspaces', api_key)
             workspaces = ws_data.get('data', [])
 
             # Step 2: For each workspace, fetch connected socials
@@ -2539,12 +2561,9 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             for ws in workspaces:
                 ws_id = ws.get('_id', '')
                 ws_name = ws.get('name', '')
-                req_soc = _req.Request(
-                    f'{POSTLY_BASE}/workspaces/{ws_id}/socials', method='GET')
-                req_soc.add_header('X-API-KEY', api_key)
                 try:
-                    with _req.urlopen(req_soc, timeout=15) as resp:
-                        soc_data = json.loads(resp.read())
+                    soc_data = self._postly_request(
+                        f'{POSTLY_BASE}/workspaces/{ws_id}/socials', api_key)
                     for ch in soc_data.get('data', []):
                         accounts.append({
                             'workspaceId': ws_id,
@@ -2567,7 +2586,6 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def _handle_postly(self):
         """Proxy POST requests to the Postly API for each selected post."""
-        import urllib.request as _req
         length = int(self.headers.get('Content-Length', 0))
         body   = self.rfile.read(length)
         try:
@@ -2578,7 +2596,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
         api_key  = payload.get('apiKey', '')
         time_str = payload.get('time', '10:00')
-        posts    = payload.get('posts', [])  # each has: date, platform, workspaceId, text, imageUrl
+        posts    = payload.get('posts', [])
 
         if not api_key:
             self._json_response({'ok': False, 'error': 'Missing apiKey'}, 400)
@@ -2587,18 +2605,16 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         POSTLY_URL = 'https://openapi.postly.ai/v1/posts'
         results = []
         for p in posts:
-            # Each post carries platform, workspaceId, channelId from auto-discovery
             platform     = p.get('platform', 'facebook')
             workspace_id = p.get('workspaceId', '')
             channel_id   = p.get('channelId', '')
             channel_name = p.get('channelName', '')
             text         = p.get('text') or ''
-            # Use channelId as target_platforms if available (targets specific page/account)
             target = channel_id if channel_id else platform
             post_body = {
                 'text':             text,
                 'workspace':        workspace_id,
-                'target_platforms': target,
+                'target_platforms': str(target),
                 'one_off_schedule': {
                     'one_off_date': p.get('date', ''),
                     'time':         time_str + ':00',
@@ -2611,15 +2627,12 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
             try:
                 req_data = json.dumps(post_body, ensure_ascii=False).encode('utf-8')
-                req = _req.Request(POSTLY_URL, data=req_data, method='POST')
-                req.add_header('X-API-KEY', api_key)
-                req.add_header('Content-Type', 'application/json')
-                with _req.urlopen(req, timeout=15) as resp:
-                    resp_body = json.loads(resp.read())
-                    results.append({
-                        'date': p.get('date'), 'platform': platform,
-                        'channelName': channel_name, 'ok': True, 'data': resp_body
-                    })
+                resp_body = self._postly_request(
+                    POSTLY_URL, api_key, method='POST', data=req_data)
+                results.append({
+                    'date': p.get('date'), 'platform': platform,
+                    'channelName': channel_name, 'ok': True, 'data': resp_body
+                })
             except Exception as e:
                 results.append({
                     'date': p.get('date'), 'platform': platform,
